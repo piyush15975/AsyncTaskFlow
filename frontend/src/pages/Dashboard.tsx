@@ -82,7 +82,7 @@ const Dashboard: React.FC = () => {
                 break;
             }
           },
-          (error) => {
+          (error: Event) => {
             console.error('SSE Connection Error:', error);
             setIsConnected(false);
             
@@ -96,9 +96,11 @@ const Dashboard: React.FC = () => {
         );
 
         // Handle connection open
-        eventSource.onopen = () => {
-          setIsConnected(true);
-        };
+        if (eventSource) {
+          eventSource.onopen = () => {
+            setIsConnected(true);
+          };
+        }
 
       } catch (error) {
         console.error('Failed to establish SSE connection:', error);

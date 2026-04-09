@@ -5,6 +5,7 @@ Addresses connection pool exhaustion, timeouts, and connection lifecycle managem
 
 import asyncio
 import logging
+import socket
 from typing import Optional
 import redis.asyncio as redis
 from redis.asyncio.connection import ConnectionPool
@@ -27,10 +28,16 @@ class OptimizedRedisConfig:
     SOCKET_CONNECT_TIMEOUT = 10  # Time to establish connection
     SOCKET_TIMEOUT = 30  # Socket read/write timeout
     SOCKET_KEEPALIVE = True  # Enable TCP keepalive
-    SOCKET_KEEPALIVE_OPTIONS = {
+    # Keepalive options must use socket constants, not string names.
+    _KEEPALIVE_OPTION_VALUES = {
         "TCP_KEEPIDLE": 600,  # Start keepalive after 10 minutes idle
         "TCP_KEEPINTVL": 60,  # Keepalive probe interval
         "TCP_KEEPCNT": 3,  # Number of failed probes before connection is dropped
+    }
+    SOCKET_KEEPALIVE_OPTIONS = {
+        getattr(socket, option_name): value
+        for option_name, value in _KEEPALIVE_OPTION_VALUES.items()
+        if hasattr(socket, option_name)
     }
 
     # Health Check Settings
