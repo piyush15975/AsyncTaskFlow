@@ -1,4 +1,0 @@
-2026-04-09
-- Rewrote README.md to remove Docker instructions and document the current local setup, architecture, APIs, and utilities.
-- Updated .env.example Redis and Celery URLs to use the provided Redis Cloud endpoint.
-- Set CELERY_BROKER_URL to DB 0 and CELERY_RESULT_BACKEND to DB 1.
