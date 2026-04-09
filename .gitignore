@@ -34,6 +34,10 @@ share/python-wheels/
 *.egg
 MANIFEST
 
+# Frontend source libraries (keep tracked)
+!frontend/src/lib/
+!frontend/src/lib/**
+
 # PyInstaller
 *.manifest
 *.spec
