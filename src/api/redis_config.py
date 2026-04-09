@@ -196,12 +196,21 @@ class RedisConnectionManager:
                 # Ping Redis to check health
                 await self._redis.ping()
 
-                # Log pool statistics
-                if hasattr(self._pool, "_available_connections"):
-                    available = len(self._pool._available_connections)
-                    created = self._pool._created_connections
+                # Log pool statistics (private attrs vary by redis-py version)
+                if self._pool is not None:
+                    available = len(getattr(self._pool, "_available_connections", []))
+                    in_use = len(getattr(self._pool, "_in_use_connections", []))
+                    created = getattr(self._pool, "_created_connections", None)
+
+                    # Fall back when _created_connections is not exposed.
+                    if created is None:
+                        created = available + in_use
+
                     logger.debug(
-                        f"Redis pool health: {available} available, {created} total connections"
+                        "Redis pool health: %s available, %s in use, %s total",
+                        available,
+                        in_use,
+                        created,
                     )
 
             except asyncio.CancelledError:
@@ -214,23 +223,18 @@ class RedisConnectionManager:
         if not self._pool:
             return {"status": "not_initialized"}
 
+        available_connections = len(getattr(self._pool, "_available_connections", []))
+        in_use_connections = len(getattr(self._pool, "_in_use_connections", []))
+        created_connections = getattr(self._pool, "_created_connections", None)
+        if created_connections is None:
+            created_connections = available_connections + in_use_connections
+
         stats = {
             "max_connections": OptimizedRedisConfig.MAX_CONNECTIONS,
-            "created_connections": getattr(self._pool, "_created_connections", 0),
-            "available_connections": len(
-                getattr(self._pool, "_available_connections", [])
-            ),
-            "in_use_connections": None,
+            "created_connections": created_connections,
+            "available_connections": available_connections,
+            "in_use_connections": in_use_connections,
         }
-
-        # Calculate in-use connections
-        if (
-            stats["created_connections"] is not None
-            and stats["available_connections"] is not None
-        ):
-            stats["in_use_connections"] = (
-                stats["created_connections"] - stats["available_connections"]
-            )
 
         return stats
 
